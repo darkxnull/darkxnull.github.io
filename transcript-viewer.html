@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcript Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <div id="content"></div>
+    <script>
+        function decrypt(encrypted, key) {
+            const [iv, content] = encrypted.split(':').map(part => CryptoJS.enc.Hex.parse(part));
+            const decrypted = CryptoJS.AES.decrypt({ ciphertext: content }, CryptoJS.enc.Utf8.parse(key), { iv: iv });
+            return decrypted.toString(CryptoJS.enc.Utf8);
+        }
+
+        async function loadTranscript() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const file = urlParams.get('file');
+            const key = prompt("Lütfen şifre çözme anahtarını girin:");
+
+            try {
+                const response = await fetch(`/transcripts/${file}`);
+                const encryptedData = await response.text();
+                const decryptedHtml = decrypt(encryptedData, key);
+                document.getElementById('content').innerHTML = decryptedHtml;
+            } catch (error) {
+                console.error('Transcript yüklenirken hata oluştu:', error);
+                document.getElementById('content').innerHTML = 'Transcript yüklenirken bir hata oluştu.';
+            }
+        }
+
+        loadTranscript();
+    </script>
+</body>
+</html>
